@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# # function to perform batch xcsao calls in IRAF
+# user input template resolution
+read -p "Enter the desired resolution in Å as a float (e.g. 2.0): " res
+res_arr=(${res//./ })
+res_str=${res_arr[0]}p${res_arr[1]}
+
+# move to user-defined input directory
+fullpath=/home/lb5eu/Documents/MMT/
+read -p "Please input directory containing inputs: " direc
+inp_path=${fullpath}$direc
+cd $inp_path
+
+# write out XCSAO syntax per input object to one file
+for file in *.fits
+do
+    var=${file%.fits}
+    echo "xcsao spectra=$file specdir=$inp_path templat=@temp.txt tempdir=/home/lb5eu/Documents/MMT/Temp_${res_str}A/FITS fixbad=yes s_emchop=yes renormalize=yes ncols=8192 zeropad=yes low_bin=40 top_low=90 top_nrun=500 nrun=700 vel_init=zero czguess=-180 svel_co=none minvel=-1000 maxvel=1000 logfile=${var}_${res_str}A.log displot=no"
+done > zz_rvcalc_xcsao.txt
+# add necessary library imports and logout for cl
+sed -i -e '1irvsao\' zz_rvcalc_xcsao.txt
+sed -i -e '$alogout' zz_rvcalc_xcsao.txt
+# run IRAF, dumping to a junklog
+cl < zz_rvcalc_xcsao.txt >& zz_rvcalc_xcsao.log
+echo "Completed!"
+# clean and return to base directory
+rm *.par
+cd $fullpath

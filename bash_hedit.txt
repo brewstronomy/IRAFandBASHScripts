@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# # function to perform batch hedit calls in IRAF
+# #     NOTE: Run this script third.
+path_full=/home/lb5eu/Documents/MMT/
+read -p "Enter the directory containing template .fits files [POLLUX/]: " direc
+direc=${direc:-"POLLUX/"}
+path_input=${path_full}/$direc
+cd $path_input
+
+echo "Editing FITS headers..."
+
+# write out hedit syntax per object to one file
+for file in *.fits
+do
+    echo "hedit images=$file field=DC-FLAG value=0 show=no add=yes verify=no"
+    echo "hedit images=$file field=DISPAXIS value=1 show=no add=yes verify=no"
+    echo "hedit images=$file field=CTYPE1 value=LINEAR show=no add=yes verify=no"
+done > zz_fitshdr_hedit.txt
+# add necessary library imports and logout for cl
+sed -i -e '1iimutil\' zz_fitshdr_hedit.txt
+sed -i -e '1iimages\' zz_fitshdr_hedit.txt
+sed -i -e '$alogout' zz_fitshdr_hedit.txt
+# run IRAF, dumping to a log
+cl < zz_fitshdr_hedit.txt >& zz_fitshdr_hedit.log
+
+echo "Completed!"
+
+cd $path_full

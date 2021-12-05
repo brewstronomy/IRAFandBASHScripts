@@ -1,0 +1,86 @@
+#!/bin/bash
+
+# # function to perform a wavelength cut on spectra
+# #		uses the SCOPY function in IRAF
+
+# # user-defined quantities
+# base path
+basepath_default=/home/lb5eu/Documents/MMT/
+echo "Base directory is: $basepath_default"
+
+read -p "Is this path correct? [(yes)/no]: " basepath_bool
+basepath_bool=${basepath_bool:-"yes"}
+if [ "$basepath_bool" == "yes" ]; then
+	basepath=$basepath_default
+else
+	read -p "Enter path to base directory: " basepath
+	echo "Base directory is: $basepath"
+fi
+
+# file directory
+read -p "Enter desired field number: " fld
+
+filepath_default=${basepath}FIELD${fld}/NORMED/
+echo "Files are located in $filepath_default"
+
+read -p "Is this path correct? [(yes)/no]: " filepath_bool
+filepath_bool=${filepath_bool:-"yes"}
+if [ "$filepath_bool" == "yes" ]; then
+	filepath=$filepath_default
+else
+	read -p "Enter correct sub-path to files: " filepath
+	echo "Files are located in $filepath"
+fi
+
+# wavelength range
+read -p "Enter starting wavelength in Å: " w1
+read -p "Enter ending wavelength in Å: " w2
+
+# final directory
+endpath_default=${basepath}FIELD${fld}/TRIMMED/
+echo "Files will be moved to $endpath_default"
+
+read -p "Is this path correct? [(yes)/no]: " endpath_bool
+endpath_bool=${endpath_bool:-"yes"}
+if [ "$endpath_bool" == "yes" ]; then
+	endpath=$endpath_default
+else
+	read -p "Enter correct destination: " endpath
+	echo "Files will be moved to $endpath"
+fi
+
+cd $filepath
+
+# # SCOPY
+# write out SCOPY syntax per input object to one file
+for file in *.fits
+do
+    arr=(${file//./ })
+    name=${arr[1]}
+    echo "scopy input=$file output=${name}_trimmed w1=$w1 w2=$w2 bands=1 format=onedspec"
+done > zz_scopy_wavetrim.txt
+
+# add necessary library imports and logout for cl
+sed -i -e '1ionedspec\' zz_scopy_wavetrim.txt
+sed -i -e '1inoao\' zz_scopy_wavetrim.txt
+sed -i -e '$alogout' zz_scopy_wavetrim.txt
+
+# run IRAF
+echo "Running IRAF..."
+cl < zz_scopy_wavetrim.txt >& zz_scopy_wavetrim.log
+echo "Completed!"
+
+# clean up
+echo "Moving files..."
+for file in *trimmed*
+do
+    arr=(${file//./ })
+    name=${arr[0]}
+    mv $file ${endpath}/${name}.fits
+done
+echo "Moved!"
+
+# clean and return to base directory
+cd $filepath
+rm -f *.par
+cd $basepath

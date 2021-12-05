@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# # function to perform batch wfits calls in IRAF
+# #     NOTE: Run this script second.
+
+# move to user-defined input directory
+path_full=/home/lb5eu/Documents/MMT/
+read -p "Enter the directory containing IRAF .imh files [POLLUX/]: " direc
+direc=${direc:-"POLLUX/"}
+path_input=${path_full}/$direc
+cd $path_input
+
+echo "Converting IRAF .imh files to FITS files..."
+
+# write out wfits syntax per object to one file
+for file in *.imh
+do
+    var=${file%.imh}
+    echo "wfits iraf_files=$file fits_files=${var}.fits extensions=yes short_header=no"
+done > zz_imh2fits_wfits.txt
+# add necessary library imports and logout for cl
+sed -i -e '1idataio\' zz_imh2fits_wfits.txt
+sed -i -e '$alogout' zz_imh2fits_wfits.txt
+# run IRAF, dumping to a log
+cl < zz_imh2fits_wfits.txt >& zz_imh2fits_wfits.log
+
+echo "Completed!"
+
+cd $path_full

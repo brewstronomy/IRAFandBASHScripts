@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# # function to perform batch bcvcorr calls in IRAF
+# move to user-defined input directory
+fullpath=/home/lb5eu/Documents/MMT/
+read -p "Please input directory containing inputs: " direc
+inp_path=${fullpath}/$direc
+cd $inp_path
+
+# write out BCVCORR syntax per input object to one file
+for file in *.fits
+do
+    var=${file%.fits}
+    echo "bcvcorr spectra=$file specdir=$inp_path keyra=RA keydec=DEC keyeqnx=EQUINOX keydate=DATE-OBS keytime=UT keyobs=OBSERVAT savebcv=yes savejd=yes verbose=yes"
+done > zz_bcvcalc_bcvcorr.txt
+# add necessary library imports and logout for cl
+sed -i -e '1irvsao\' zz_bcvcalc_bcvcorr.txt
+sed -i -e '$alogout' zz_bcvcalc_bcvcorr.txt
+# run IRAF, dumping to a log
+cl < zz_bcvcalc_bcvcorr.txt >& zz_bcvcalc_bcvcorr.log
+echo "Completed!"
+# clean and return to base directory
+rm *.par
+cd $fullpath

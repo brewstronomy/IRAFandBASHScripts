@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# # simple script to clean intermediate files
+# #		NOTE: Run this script fifth.
+path_full=/home/lb5eu/Documents/MMT/
+read -p "Enter the directory to clean [POLLUX/]: " direc
+direc=${direc:-"POLLUX/"}
+path_input=${path_full}/$direc
+cd $path_input
+
+read -p "Clean ASCII-formatted spectra as well? [(yes)/no] " all
+all=${all:-"yes"}
+
+echo "Cleaning directory..."
+
+if [ "$all" == "yes" ]; then
+	rm -rf *.imh *.par *.pix *.tab *_abs.txt
+else
+	rm -rf *.imh *.par *.pix
+fi
+
+echo "Completed!"
+
+cd $path_fullo

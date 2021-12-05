@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# # simple script to move files to correct locations
+# #		NOTE: Run this script fourth.
+path_full=/home/lb5eu/Documents/MMT/
+read -p "Enter the directory containing template .fits files [POLLUX/]: " direc
+direc=${direc:-"POLLUX/"}
+path_input=${path_full}/$direc
+cd $path_input
+
+read -p "Enter the desired resolution in Å as a float (e.g. 2.0): " res
+res_arr=(${res//./ })
+res_str=${res_arr[0]}p${res_arr[1]}
+
+echo "Moving FITS files..."
+
+mv ${path_input}/*.fits ../Temp_${res_str}A/FITS
+
+echo "Completed!"
+
+cd $path_full

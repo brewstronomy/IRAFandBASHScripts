@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# # function to perform batch rspectext calls in IRAF
+# #     NOTE: Run this script first.
+
+# move to user-defined input directory
+path_full=/home/lb5eu/Documents/MMT/
+read -p "Enter the directory containing template .tab files [POLLUX/]: " direc
+direc=${direc:-"POLLUX/"}
+path_input=${path_full}/$direc
+cd $path_input
+
+read -p "Enter the desired resolution in Å as a float (e.g. 2.0): " res
+res_arr=(${res//./ })
+res_str=${res_arr[0]}p${res_arr[1]}
+
+echo "Making IRAF .imh files..."
+
+# write out rspectext syntax per object to one file
+for file in *${res_str}A.tab
+do
+    fl=${file%.tab}
+    name=${fl%_${res_str}A}
+    echo "rspectext input=$file output=${name}.imh title=$name dtype=linear crval1=3000.04 cdelt1=0.01999973"
+done > zz_makeimh_rspectext.txt
+# add necessary library imports and logout for cl
+sed -i -e '1ionedspec\' zz_makeimh_rspectext.txt
+sed -i -e '1idataio\' zz_makeimh_rspectext.txt
+sed -i -e '1inoao\' zz_makeimh_rspectext.txt
+sed -i -e '$alogout' zz_makeimh_rspectext.txt
+# run IRAF, dumping to a log
+cl < zz_makeimh_rspectext.txt >& zz_makeimh_rspectext.log
+
+echo "Completed!"
+
+cd $path_full
